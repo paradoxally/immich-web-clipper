@@ -1,4 +1,4 @@
-// Background service worker for Save to Immich extension
+// Background service worker for Immich Web Clipper extension
 
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {

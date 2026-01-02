@@ -1,6 +1,6 @@
 /* ========================================
    IMMICH DESIGN LANGUAGE
-   Save to Immich - Chrome Extension
+   Immich Web Clipper - Chrome Extension
    ======================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Overpass:wght@400;500;600;700&display=swap');
@@ -188,9 +188,9 @@ header h2 {
   margin-left: -8px;
 }
 
-.icon-btn .icon-moon { display: none; }
-[data-theme="dark"] .icon-btn .icon-sun { display: none; }
-[data-theme="dark"] .icon-btn .icon-moon { display: block; }
+.icon-btn .icon-sun { display: none; }
+[data-theme="dark"] .icon-btn .icon-sun { display: block; }
+[data-theme="dark"] .icon-btn .icon-moon { display: none; }
 
 /* ========================================
    NOTIFICATIONS
