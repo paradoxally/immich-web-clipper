@@ -474,6 +474,10 @@ header h2 {
   margin-bottom: 20px;
 }
 
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
 .settings-section h3 {
   font-size: 11px;
   font-weight: 700;
@@ -619,18 +623,48 @@ header h2 {
 }
 
 /* ========================================
+   INSTRUCTION TEXT
+   ======================================== */
+
+.instruction-text {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.instruction-text span {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ========================================
    FOOTER
    ======================================== */
 
 footer {
-  margin-top: 20px;
-  padding-top: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
-  text-align: center;
+}
+
+footer a {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+footer a:hover {
+  color: var(--text);
 }
 
 footer span {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
-  font-weight: 500;
+  opacity: 0.5;
 }
