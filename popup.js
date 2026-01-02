@@ -28,6 +28,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Reset stats elements
   const resetStatsBtn = document.getElementById('reset-stats-btn');
+
+  // Version element
+  const versionNumberEl = document.getElementById('version-number');
+
+  // Footer links
+  const footerGithubLink = document.getElementById('footer-github');
+  const footerPrivacyLink = document.getElementById('footer-privacy');
+  const footerBugLink = document.getElementById('footer-bug');
   const resetConfirm = document.getElementById('reset-confirm');
   const resetYesBtn = document.getElementById('reset-yes');
   const resetNoBtn = document.getElementById('reset-no');
@@ -47,6 +55,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Apply theme
   const theme = settings.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', theme);
+
+  // Set version and links from manifest
+  const manifest = chrome.runtime.getManifest();
+  versionNumberEl.textContent = `v${manifest.version}`;
+
+  const repoUrl = manifest.homepage_url || 'https://github.com/paradoxally/immich-web-clipper';
+  footerGithubLink.href = repoUrl;
+  footerPrivacyLink.href = `${repoUrl}/blob/main/PRIVACY.md`;
+  footerBugLink.href = `${repoUrl}/issues`;
 
   // Initialize settings toggles
   alertsToggle.checked = settings.showAlerts !== false; // default true

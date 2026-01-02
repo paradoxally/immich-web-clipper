@@ -668,3 +668,22 @@ footer span {
   color: var(--text-muted);
   opacity: 0.5;
 }
+
+/* ========================================
+   VERSION INFO
+   ======================================== */
+
+.version-info {
+  text-align: center;
+}
+
+.version-info span {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.5;
+  font-weight: 500;
+}
+
+.settings-section:has(+ .version-info) {
+  margin-bottom: 0;
+}
