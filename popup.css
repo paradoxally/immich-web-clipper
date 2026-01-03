@@ -228,6 +228,43 @@ header h2 {
   letter-spacing: 0.01em;
 }
 
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  color: var(--text-muted);
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+}
+
+.info-icon:hover {
+  color: var(--text-secondary);
+}
+
+.info-icon .tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.info-icon:hover .tooltip {
+  opacity: 1;
+}
+
 .field input,
 .field select {
   width: 100%;

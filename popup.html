@@ -41,7 +41,22 @@
         </div>
 
         <div class="field">
-          <label for="api-key">API Key</label>
+          <label for="api-key">
+            API Key
+            <span class="info-icon" title="">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="8" r="1"/>
+                <path d="M12 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span class="tooltip">
+                Required API key permissions:<br>
+                • server.about<br>
+                • album.read & album.update<br>
+                • asset.upload
+              </span>
+            </span>
+          </label>
           <input type="password" id="api-key" placeholder="Enter your API key" required>
           <span class="hint">Account Settings → API Keys</span>
         </div>

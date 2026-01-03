@@ -73,7 +73,7 @@ async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
       stats.totalSize += imageSize;
       await chrome.storage.sync.set({ stats });
       
-      notifyUser(albumId ? `Saved to ${albumName}` : "Saved to Immich", "success", tabId, settings);
+      notifyUser(albumId ? `Saved to ${albumName}` : "Saved to Library", "success", tabId, settings);
     } else {
       // Notify user this was a duplicate
       notifyUser("Already in library", "info", tabId, settings);
@@ -493,14 +493,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function testConnection(serverUrl, apiKey) {
-  const response = await fetch(`${serverUrl}/api/server/about`, {
-    headers: { 'x-api-key': apiKey }
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Connection failed: ${response.status}`);
+  try {
+    const response = await fetch(`${serverUrl}/api/server/about`, {
+      headers: { 'x-api-key': apiKey }
+    });
+
+    console.log('Test connection response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
+    if (!response.ok) {
+      const responseText = await response.text();
+      console.error('Test connection failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+        url: `${serverUrl}/api/server/about`
+      });
+
+      if (response.status === 401) {
+        throw new Error('Invalid API key');
+      } else if (response.status === 403) {
+        throw new Error('API key lacks required permissions. Enable: server.about, album.read, album.update, asset.upload');
+      } else if (response.status === 404) {
+        throw new Error('Server not found. Check your server URL.');
+      } else {
+        throw new Error(`Connection failed (${response.status})`);
+      }
+    }
+
+    const data = await response.json();
+    return { success: true, version: data.version };
+  } catch (error) {
+    console.error('Test connection error:', error);
+    throw error;
   }
-  
-  const data = await response.json();
-  return { success: true, version: data.version };
 }

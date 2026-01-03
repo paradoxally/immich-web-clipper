@@ -75,8 +75,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadMainView(settings);
   } else {
     showView('login');
-    if (settings.serverUrl) serverUrlInput.value = settings.serverUrl;
-    if (settings.apiKey) apiKeyInput.value = settings.apiKey;
+
+    // Load draft values from local storage (temporary inputs)
+    const draft = await chrome.storage.local.get(['draftServerUrl', 'draftApiKey']);
+    if (draft.draftServerUrl) serverUrlInput.value = draft.draftServerUrl;
+    if (draft.draftApiKey) apiKeyInput.value = draft.draftApiKey;
+
+    // Fall back to saved values if no drafts
+    if (!draft.draftServerUrl && settings.serverUrl) serverUrlInput.value = settings.serverUrl;
+    if (!draft.draftApiKey && settings.apiKey) apiKeyInput.value = settings.apiKey;
   }
 
   // View switching
@@ -117,24 +124,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (result.success) {
         await chrome.storage.sync.set({ serverUrl, apiKey });
+        // Clear draft values after successful connection
+        await chrome.storage.local.remove(['draftServerUrl', 'draftApiKey']);
         const newSettings = await chrome.storage.sync.get([
           'serverUrl', 'apiKey', 'defaultAlbumId', 'defaultAlbumName', 'stats'
         ]);
         showView('main');
         await loadMainView(newSettings);
       } else {
-        showNotification(`Connection failed: ${result.error}`);
+        showNotification(result.error);
       }
     } catch (error) {
-      showNotification(`Error: ${error.message}`);
+      showNotification(error.message);
     } finally {
       setLoading(connectBtn, false);
     }
   });
 
-  // Clear error when user types
-  serverUrlInput.addEventListener('input', hideNotification);
-  apiKeyInput.addEventListener('input', hideNotification);
+  // Auto-save draft inputs and clear errors when user types
+  serverUrlInput.addEventListener('input', () => {
+    hideNotification();
+    chrome.storage.local.set({ draftServerUrl: serverUrlInput.value });
+  });
+
+  apiKeyInput.addEventListener('input', () => {
+    hideNotification();
+    chrome.storage.local.set({ draftApiKey: apiKeyInput.value });
+  });
 
   // Load main view data
   async function loadMainView(settings) {
