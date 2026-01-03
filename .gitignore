@@ -19,3 +19,6 @@ package-lock.json
 # Environment
 .env
 .env.local
+
+# Chrome Web Store promo screenshots (local only)
+/screenshots/store/

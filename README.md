@@ -2,7 +2,7 @@
 
 A Chrome extension for saving images from the web directly to your self-hosted [Immich](https://immich.app) server.
 
-![Immich Web Clipper](./assets/screenshot-main.png)
+![Immich Web Clipper](./screenshots/repo/mainview.png)
 
 ## Features
 
@@ -37,6 +37,8 @@ A Chrome extension for saving images from the web directly to your self-hosted [
 1. Right-click any image on a webpage
 2. Select "Save to Immich" from the context menu
 3. The image will be saved to your configured album
+
+![Right-click to save](./screenshots/repo/contextmenu.png)
 
 ### Settings
 
