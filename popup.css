@@ -401,6 +401,7 @@ header h2 {
   font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
+  line-height: 1;
 }
 
 .status-dot {
@@ -410,6 +411,8 @@ header h2 {
   border-radius: 50%;
   box-shadow: 0 0 0 3px var(--success-light);
   cursor: default;
+  flex-shrink: 0;
+  transform: translateY(-2px);
 }
 
 .stats-grid {
