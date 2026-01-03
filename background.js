@@ -145,7 +145,7 @@ async function notifyUser(message, type, tabId, settings) {
       args: [message, type]
     });
   } catch (e) {
-    console.log('Could not show toast:', e);
+    // Silently fail if toast cannot be shown
   }
 }
 
@@ -264,7 +264,7 @@ async function showAlbumPicker(tabId, imageUrl, albums, settings) {
       }
     });
   } catch (e) {
-    console.log('Could not show album picker:', e);
+    // Silently fail if album picker cannot be shown
   }
 }
 
@@ -498,21 +498,7 @@ async function testConnection(serverUrl, apiKey) {
       headers: { 'x-api-key': apiKey }
     });
 
-    console.log('Test connection response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
     if (!response.ok) {
-      const responseText = await response.text();
-      console.error('Test connection failed:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: responseText,
-        url: `${serverUrl}/api/server/about`
-      });
-
       if (response.status === 401) {
         throw new Error('Invalid API key');
       } else if (response.status === 403) {
