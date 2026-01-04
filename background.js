@@ -76,7 +76,7 @@ async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
       notifyUser(albumId ? `Saved to ${albumName}` : "Saved to Library", "success", tabId, settings);
     } else {
       // Notify user this was a duplicate
-      notifyUser("Already in library", "info", tabId, settings);
+      notifyUser("Already in library", "success", tabId, settings);
     }
     
   } catch (error) {
