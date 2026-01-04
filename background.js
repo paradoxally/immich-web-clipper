@@ -44,22 +44,46 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
   try {
     notifyUser("Saving…", "info", tabId, settings);
-    
+
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       throw new Error(`Failed to fetch image: ${imageResponse.status}`);
     }
-    
+
+    // Extract date from HTTP headers for better timestamps
+    const lastModified = imageResponse.headers.get('Last-Modified');
+    const dateHeader = imageResponse.headers.get('Date');
+    let fileDate = new Date();
+
+    if (lastModified) {
+      const parsed = new Date(lastModified);
+      if (!isNaN(parsed.getTime())) {
+        fileDate = parsed;
+      }
+    } else if (dateHeader) {
+      const parsed = new Date(dateHeader);
+      if (!isNaN(parsed.getTime())) {
+        fileDate = parsed;
+      }
+    }
+
     const imageBlob = await imageResponse.blob();
     const imageSize = imageBlob.size;
-    
+
     let filename = imageUrl.split('/').pop()?.split('?')[0] || `image_${Date.now()}`;
     if (!filename.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
       const ext = imageBlob.type.split('/')[1] || 'jpg';
       filename += `.${ext}`;
     }
-    
-    const uploadResult = await uploadToImmich(settings.serverUrl, settings.apiKey, imageBlob, filename);
+
+    // Prepare metadata for upload
+    const metadata = {
+      imageUrl: imageUrl,
+      fileCreatedAt: fileDate,
+      fileModifiedAt: fileDate
+    };
+
+    const uploadResult = await uploadToImmich(settings.serverUrl, settings.apiKey, imageBlob, filename, metadata);
     
     if (albumId) {
       await addToAlbum(settings.serverUrl, settings.apiKey, albumId, uploadResult.id);
@@ -85,14 +109,24 @@ async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
   }
 }
 
-async function uploadToImmich(serverUrl, apiKey, imageBlob, filename) {
+async function uploadToImmich(serverUrl, apiKey, imageBlob, filename, metadata) {
   const formData = new FormData();
   formData.append('assetData', imageBlob, filename);
   formData.append('deviceAssetId', `browser-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
   formData.append('deviceId', 'immich-browser-extension');
-  formData.append('fileCreatedAt', new Date().toISOString());
-  formData.append('fileModifiedAt', new Date().toISOString());
-  
+  formData.append('fileCreatedAt', metadata.fileCreatedAt.toISOString());
+  formData.append('fileModifiedAt', metadata.fileModifiedAt.toISOString());
+
+  // Generate and append XMP sidecar with source URL
+  try {
+    const xmpContent = generateXMP(metadata);
+    const xmpBlob = new Blob([xmpContent], { type: 'application/rdf+xml' });
+    formData.append('sidecarData', xmpBlob, `${filename}.xmp`);
+  } catch (error) {
+    console.warn('Failed to generate XMP sidecar:', error);
+    // Continue upload without sidecar
+  }
+
   const response = await fetch(`${serverUrl}/api/assets`, {
     method: 'POST',
     headers: { 'x-api-key': apiKey },
@@ -106,11 +140,43 @@ async function uploadToImmich(serverUrl, apiKey, imageBlob, filename) {
   
   const result = await response.json();
   // Return both id and status - status can be "created" or "duplicate"
-  return { 
-    id: result.id, 
+  return {
+    id: result.id,
     status: result.status || 'created',
     isDuplicate: result.status === 'duplicate'
   };
+}
+
+function generateXMP(metadata) {
+  // XML escape function
+  const escapeXml = (str) => {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  };
+
+  const fileDate = metadata.fileCreatedAt.toISOString();
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+      xmlns:exif="http://ns.adobe.com/exif/1.0/"
+      xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/">
+      <dc:source>${escapeXml(metadata.imageUrl)}</dc:source>
+      <xmp:CreateDate>${fileDate}</xmp:CreateDate>
+      <xmp:ModifyDate>${fileDate}</xmp:ModifyDate>
+      <photoshop:DateCreated>${fileDate}</photoshop:DateCreated>
+      <exif:DateTimeOriginal>${fileDate}</exif:DateTimeOriginal>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>`;
 }
 
 async function addToAlbum(serverUrl, apiKey, albumId, assetId) {
