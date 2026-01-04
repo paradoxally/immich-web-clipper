@@ -1,17 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // Views
   const loginView = document.getElementById('login-view');
   const mainView = document.getElementById('main-view');
   const settingsView = document.getElementById('settings-view');
 
-  // Login elements
   const loginForm = document.getElementById('login-form');
   const serverUrlInput = document.getElementById('server-url');
   const apiKeyInput = document.getElementById('api-key');
   const connectBtn = document.getElementById('connect-btn');
   const loginNotification = document.getElementById('login-notification');
 
-  // Main view elements
   const settingsBtn = document.getElementById('settings-btn');
   const disconnectBtn = document.getElementById('disconnect-btn');
   const serverNameEl = document.getElementById('server-name');
@@ -19,20 +16,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statSizeEl = document.getElementById('stat-size');
   const currentAlbumNameEl = document.getElementById('current-album-name');
 
-  // Settings elements
   const backBtn = document.getElementById('back-btn');
   const albumSelect = document.getElementById('album-select');
   const refreshAlbumsBtn = document.getElementById('refresh-albums');
   const alertsToggle = document.getElementById('setting-alerts');
   const askAlbumToggle = document.getElementById('setting-ask-album');
 
-  // Reset stats elements
   const resetStatsBtn = document.getElementById('reset-stats-btn');
 
-  // Version element
   const versionNumberEl = document.getElementById('version-number');
 
-  // Footer links
   const footerGithubLink = document.getElementById('footer-github');
   const footerPrivacyLink = document.getElementById('footer-privacy');
   const footerBugLink = document.getElementById('footer-bug');
@@ -40,23 +33,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const resetYesBtn = document.getElementById('reset-yes');
   const resetNoBtn = document.getElementById('reset-no');
 
-  // Theme toggles
   const themeToggles = [
     document.getElementById('theme-toggle-login'),
     document.getElementById('theme-toggle-main')
   ];
 
-  // Load settings
   const settings = await chrome.storage.sync.get([
     'serverUrl', 'apiKey', 'defaultAlbumId', 'defaultAlbumName',
     'theme', 'showAlerts', 'askAlbumEveryTime', 'stats'
   ]);
 
-  // Apply theme
   const theme = settings.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', theme);
 
-  // Set version and links from manifest
   const manifest = chrome.runtime.getManifest();
   versionNumberEl.textContent = `v${manifest.version}`;
 
@@ -65,11 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   footerPrivacyLink.href = `${repoUrl}/blob/main/PRIVACY.md`;
   footerBugLink.href = `${repoUrl}/issues`;
 
-  // Initialize settings toggles
-  alertsToggle.checked = settings.showAlerts !== false; // default true
-  askAlbumToggle.checked = settings.askAlbumEveryTime === true; // default false
+  alertsToggle.checked = settings.showAlerts !== false;
+  askAlbumToggle.checked = settings.askAlbumEveryTime === true;
 
-  // Check if connected
   if (settings.serverUrl && settings.apiKey) {
     showView('main');
     await loadMainView(settings);
@@ -86,14 +73,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!draft.draftApiKey && settings.apiKey) apiKeyInput.value = settings.apiKey;
   }
 
-  // View switching
   function showView(view) {
     loginView.classList.toggle('hidden', view !== 'login');
     mainView.classList.toggle('hidden', view !== 'main');
     settingsView.classList.toggle('hidden', view !== 'settings');
   }
 
-  // Theme toggle
   themeToggles.forEach(btn => {
     btn?.addEventListener('click', async () => {
       const current = document.documentElement.getAttribute('data-theme');
@@ -103,10 +88,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Login form
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const serverUrl = normalizeUrl(serverUrlInput.value);
     const apiKey = apiKeyInput.value.trim();
 
@@ -152,9 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.storage.local.set({ draftApiKey: apiKeyInput.value });
   });
 
-  // Load main view data
   async function loadMainView(settings) {
-    // Server name from URL - lowercase
     try {
       const url = new URL(settings.serverUrl);
       serverNameEl.textContent = url.hostname;
@@ -162,12 +144,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       serverNameEl.textContent = 'Connected';
     }
 
-    // Stats
     const stats = settings.stats || { imageCount: 0, totalSize: 0 };
     statImagesEl.textContent = stats.imageCount.toLocaleString();
     statSizeEl.textContent = formatBytes(stats.totalSize);
 
-    // Current album - check if ask every time is enabled
     const askEveryTime = settings.askAlbumEveryTime === true;
     if (askEveryTime) {
       currentAlbumNameEl.textContent = 'Ask every time';
@@ -175,14 +155,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentAlbumNameEl.textContent = settings.defaultAlbumName || 'Library';
     }
 
-    // Load albums for settings
     await loadAlbums(settings.serverUrl, settings.apiKey, settings.defaultAlbumId);
   }
 
-  // Settings button
   settingsBtn.addEventListener('click', () => showView('settings'));
 
-  // Back button
   backBtn.addEventListener('click', async () => {
     showView('main');
     const settings = await chrome.storage.sync.get(['defaultAlbumName', 'askAlbumEveryTime']);
@@ -193,7 +170,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Disconnect
   disconnectBtn.addEventListener('click', async () => {
     await chrome.storage.sync.remove(['serverUrl', 'apiKey']);
     serverUrlInput.value = '';
@@ -201,18 +177,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     showView('login');
   });
 
-  // Album select
   albumSelect.addEventListener('change', async () => {
     const albumId = albumSelect.value;
     const albumName = albumSelect.options[albumSelect.selectedIndex]?.text || '';
-    
+
     await chrome.storage.sync.set({
       defaultAlbumId: albumId || null,
       defaultAlbumName: albumId ? albumName : null
     });
   });
 
-  // Refresh albums
   refreshAlbumsBtn.addEventListener('click', async () => {
     const settings = await chrome.storage.sync.get(['serverUrl', 'apiKey', 'defaultAlbumId']);
     if (settings.serverUrl && settings.apiKey) {
@@ -220,7 +194,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Settings toggles
   alertsToggle.addEventListener('change', async () => {
     await chrome.storage.sync.set({ showAlerts: alertsToggle.checked });
   });
@@ -229,7 +202,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.sync.set({ askAlbumEveryTime: askAlbumToggle.checked });
   });
 
-  // Reset stats
   resetStatsBtn.addEventListener('click', () => {
     resetStatsBtn.classList.add('hidden');
     resetConfirm.classList.remove('hidden');
@@ -248,7 +220,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     resetStatsBtn.classList.remove('hidden');
   });
 
-  // Load albums
   async function loadAlbums(serverUrl, apiKey, preselectAlbumId = null) {
     try {
       const result = await chrome.runtime.sendMessage({
@@ -263,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           albumSelect.remove(1);
         }
 
-        const albums = result.albums.sort((a, b) => 
+        const albums = result.albums.sort((a, b) =>
           a.albumName.localeCompare(b.albumName)
         );
 
@@ -291,7 +262,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Helpers
   function normalizeUrl(url) {
     let normalized = url.trim();
     if (normalized.endsWith('/')) normalized = normalized.slice(0, -1);

@@ -1,6 +1,3 @@
-// Background service worker for Immich Web Clipper extension
-
-// Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "save-to-immich",
@@ -9,7 +6,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Handle context menu click
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "save-to-immich") {
     const imageUrl = info.srcUrl;
@@ -25,7 +21,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       return;
     }
 
-    // If ask every time is enabled, show album picker
     if (settings.askAlbumEveryTime) {
       try {
         const albums = await getAlbums(settings.serverUrl, settings.apiKey);
@@ -35,8 +30,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
       return;
     }
-    
-    // Otherwise save directly
+
     await saveImage(imageUrl, settings.defaultAlbumId, settings.defaultAlbumName, tabId, settings);
   }
 });
@@ -89,7 +83,6 @@ async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
       await addToAlbum(settings.serverUrl, settings.apiKey, albumId, uploadResult.id);
     }
 
-    // Only update stats if this is a new image, not a duplicate
     if (!uploadResult.isDuplicate) {
       const stored = await chrome.storage.sync.get(['stats']);
       const stats = stored.stats || { imageCount: 0, totalSize: 0 };
@@ -99,7 +92,6 @@ async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
       
       notifyUser(albumId ? `Saved to ${albumName}` : "Saved to Library", "success", tabId, settings);
     } else {
-      // Notify user this was a duplicate
       notifyUser("Already in library", "success", tabId, settings);
     }
     
@@ -117,7 +109,6 @@ async function uploadToImmich(serverUrl, apiKey, imageBlob, filename, metadata) 
   formData.append('fileCreatedAt', metadata.fileCreatedAt.toISOString());
   formData.append('fileModifiedAt', metadata.fileModifiedAt.toISOString());
 
-  // Generate and append XMP sidecar with source URL
   const xmpContent = generateXMP(metadata);
   const xmpBlob = new Blob([xmpContent], { type: 'application/rdf+xml' });
   formData.append('sidecarData', xmpBlob, `${filename}.xmp`);
@@ -134,7 +125,6 @@ async function uploadToImmich(serverUrl, apiKey, imageBlob, filename, metadata) 
   }
   
   const result = await response.json();
-  // Return both id and status - status can be "created" or "duplicate"
   return {
     id: result.id,
     status: result.status || 'created',
@@ -143,7 +133,6 @@ async function uploadToImmich(serverUrl, apiKey, imageBlob, filename, metadata) 
 }
 
 function generateXMP(metadata) {
-  // XML escape function
   const escapeXml = (str) => {
     if (!str) return '';
     return String(str)
@@ -192,7 +181,6 @@ async function addToAlbum(serverUrl, apiKey, albumId, assetId) {
 }
 
 async function notifyUser(message, type, tabId, settings) {
-  // Check if alerts are disabled (except for errors which always show)
   if (settings?.showAlerts === false && type !== 'error') {
     return;
   }
@@ -206,7 +194,7 @@ async function notifyUser(message, type, tabId, settings) {
       args: [message, type]
     });
   } catch (e) {
-    // Silently fail if toast cannot be shown
+    // Toast cannot be shown
   }
 }
 
@@ -315,7 +303,6 @@ async function showAlbumPicker(tabId, imageUrl, albums, settings) {
       args: [albums, settings.defaultAlbumId]
     });
 
-    // Listen for album selection
     chrome.runtime.onMessage.addListener(function handler(request, sender) {
       if (request.action === 'albumSelected' && sender.tab?.id === tabId) {
         chrome.runtime.onMessage.removeListener(handler);
@@ -325,12 +312,11 @@ async function showAlbumPicker(tabId, imageUrl, albums, settings) {
       }
     });
   } catch (e) {
-    // Silently fail if album picker cannot be shown
+    // Album picker cannot be shown
   }
 }
 
 function injectAlbumPicker(albums, defaultAlbumId) {
-  // Remove existing picker (including old versions)
   document.querySelectorAll('[id^="immich-album-picker"]').forEach(el => el.remove());
 
   const picker = document.createElement('div');
@@ -462,11 +448,10 @@ function injectAlbumPicker(albums, defaultAlbumId) {
 
   document.body.appendChild(picker);
 
-  // Force cursor styles via JavaScript to override any page styles
+  // Force cursor styles via JavaScript to override page styles
   const container = document.getElementById('immich-album-picker-v2-container');
   const overlayEl = document.getElementById('immich-album-picker-v2-overlay');
 
-  // Apply to all elements
   [overlayEl, container].forEach(el => {
     if (el) {
       el.style.setProperty('cursor', 'default', 'important');
@@ -474,7 +459,6 @@ function injectAlbumPicker(albums, defaultAlbumId) {
     }
   });
 
-  // Apply to container and all descendants
   if (container) {
     container.querySelectorAll('*').forEach(el => {
       el.style.setProperty('cursor', 'default', 'important');
@@ -482,7 +466,6 @@ function injectAlbumPicker(albums, defaultAlbumId) {
     });
   }
 
-  // Set pointer cursor for interactive elements
   const selectEl = document.getElementById('immich-album-v2-select');
   const closeBtnEl = document.getElementById('immich-picker-v2-close');
   const saveBtnEl = document.getElementById('immich-picker-v2-save');
@@ -536,7 +519,6 @@ async function getAlbums(serverUrl, apiKey) {
   return response.json();
 }
 
-// Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'testConnection') {
     testConnection(request.serverUrl, request.apiKey)
