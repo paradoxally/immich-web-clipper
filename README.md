@@ -18,8 +18,10 @@ A Chrome extension for saving images from the web directly to your self-hosted [
 ### From Chrome Web Store
 *(Coming soon)*
 
-### Manual Installation (Developer Mode)
-1. Download or clone this repository
+### Manual Installation
+1. **Download the extension:**
+   - **For users:** Download the latest `.zip` from [GitHub Releases](https://github.com/paradoxally/immich-web-clipper/releases/latest) and extract it
+   - **For developers:** Clone this repository
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" in the top right
 4. Click "Load unpacked" and select the extension folder
