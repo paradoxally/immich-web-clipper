@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a bug or issue with the extension
-title: "[Bug]: "
+title: "[BUG] "
 labels: ["bug"]
 body:
   - type: textarea
