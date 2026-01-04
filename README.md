@@ -32,6 +32,7 @@ A Chrome extension for saving images from the web directly to your self-hosted [
 1. Click the extension icon in your toolbar
 2. Enter your Immich server URL (e.g., `https://immich.example.com`)
 3. Enter your API key (found in Immich → Account Settings → API Keys)
+   - **Required permissions:** `server.about`, `album.read`, `album.update`, `asset.upload`
 4. Click "Connect"
 
 ## Usage
