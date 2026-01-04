@@ -118,14 +118,9 @@ async function uploadToImmich(serverUrl, apiKey, imageBlob, filename, metadata) 
   formData.append('fileModifiedAt', metadata.fileModifiedAt.toISOString());
 
   // Generate and append XMP sidecar with source URL
-  try {
-    const xmpContent = generateXMP(metadata);
-    const xmpBlob = new Blob([xmpContent], { type: 'application/rdf+xml' });
-    formData.append('sidecarData', xmpBlob, `${filename}.xmp`);
-  } catch (error) {
-    console.warn('Failed to generate XMP sidecar:', error);
-    // Continue upload without sidecar
-  }
+  const xmpContent = generateXMP(metadata);
+  const xmpBlob = new Blob([xmpContent], { type: 'application/rdf+xml' });
+  formData.append('sidecarData', xmpBlob, `${filename}.xmp`);
 
   const response = await fetch(`${serverUrl}/api/assets`, {
     method: 'POST',
@@ -470,7 +465,7 @@ function injectAlbumPicker(albums, defaultAlbumId) {
   // Force cursor styles via JavaScript to override any page styles
   const container = document.getElementById('immich-album-picker-v2-container');
   const overlayEl = document.getElementById('immich-album-picker-v2-overlay');
-  
+
   // Apply to all elements
   [overlayEl, container].forEach(el => {
     if (el) {
@@ -478,7 +473,7 @@ function injectAlbumPicker(albums, defaultAlbumId) {
       el.style.setProperty('pointer-events', 'auto', 'important');
     }
   });
-  
+
   // Apply to container and all descendants
   if (container) {
     container.querySelectorAll('*').forEach(el => {
@@ -486,12 +481,12 @@ function injectAlbumPicker(albums, defaultAlbumId) {
       el.style.setProperty('pointer-events', 'auto', 'important');
     });
   }
-  
+
   // Set pointer cursor for interactive elements
   const selectEl = document.getElementById('immich-album-v2-select');
   const closeBtnEl = document.getElementById('immich-picker-v2-close');
   const saveBtnEl = document.getElementById('immich-picker-v2-save');
-  
+
   [selectEl, closeBtnEl, saveBtnEl].forEach(el => {
     if (el) {
       el.style.setProperty('cursor', 'pointer', 'important');
