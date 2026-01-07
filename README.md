@@ -16,7 +16,7 @@ A Chrome extension for saving images from the web directly to your self-hosted [
 ## Installation
 
 ### From Chrome Web Store
-*(Coming soon)*
+[Install from Chrome Web Store](https://chromewebstore.google.com/detail/immich-web-clipper/glmkfdikhbaammhdcaggjgelcihjmhno)
 
 ### Manual Installation
 1. **Download the extension:**
