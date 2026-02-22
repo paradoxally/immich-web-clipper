@@ -10,12 +10,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "save-to-immich") {
     const imageUrl = info.srcUrl;
     const tabId = tab?.id;
-    
+    const tabUrl = tab?.url;
+
     const settings = await chrome.storage.sync.get([
       'serverUrl', 'apiKey', 'defaultAlbumId', 'defaultAlbumName',
       'showAlerts', 'askAlbumEveryTime'
     ]);
-    
+
     if (!settings.serverUrl || !settings.apiKey) {
       notifyUser("Configure Immich in extension settings", "error", tabId, settings);
       return;
@@ -24,61 +25,33 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (settings.askAlbumEveryTime) {
       try {
         const albums = await getAlbums(settings.serverUrl, settings.apiKey);
-        showAlbumPicker(tabId, imageUrl, albums, settings);
+        showAlbumPicker(tabId, tabUrl, imageUrl, albums, settings);
       } catch (error) {
         notifyUser(`Error: ${error.message}`, "error", tabId, settings);
       }
       return;
     }
 
-    await saveImage(imageUrl, settings.defaultAlbumId, settings.defaultAlbumName, tabId, settings);
+    await saveImage(imageUrl, settings.defaultAlbumId, settings.defaultAlbumName, tabId, tabUrl, settings);
   }
 });
 
-async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
+async function saveImage(imageUrl, albumId, albumName, tabId, tabUrl, settings) {
   try {
     notifyUser("Saving…", "info", tabId, settings);
 
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch image: ${imageResponse.status}`);
-    }
+    const { blob, lastModified, dateHeader } = await fetchImage(imageUrl, tabUrl);
+    const fileDate = parseDateFromHeaders(lastModified, dateHeader);
+    const filename = extractFilename(imageUrl, blob.type);
 
-    // Extract date from HTTP headers for better timestamps
-    const lastModified = imageResponse.headers.get('Last-Modified');
-    const dateHeader = imageResponse.headers.get('Date');
-    let fileDate = new Date();
-
-    if (lastModified) {
-      const parsed = new Date(lastModified);
-      if (!isNaN(parsed.getTime())) {
-        fileDate = parsed;
-      }
-    } else if (dateHeader) {
-      const parsed = new Date(dateHeader);
-      if (!isNaN(parsed.getTime())) {
-        fileDate = parsed;
-      }
-    }
-
-    const imageBlob = await imageResponse.blob();
-    const imageSize = imageBlob.size;
-
-    let filename = imageUrl.split('/').pop()?.split('?')[0] || `image_${Date.now()}`;
-    if (!filename.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
-      const ext = imageBlob.type.split('/')[1] || 'jpg';
-      filename += `.${ext}`;
-    }
-
-    // Prepare metadata for upload
     const metadata = {
       imageUrl: imageUrl,
       fileCreatedAt: fileDate,
       fileModifiedAt: fileDate
     };
 
-    const uploadResult = await uploadToImmich(settings.serverUrl, settings.apiKey, imageBlob, filename, metadata);
-    
+    const uploadResult = await uploadToImmich(settings.serverUrl, settings.apiKey, blob, filename, metadata);
+
     if (albumId) {
       await addToAlbum(settings.serverUrl, settings.apiKey, albumId, uploadResult.id);
     }
@@ -87,18 +60,75 @@ async function saveImage(imageUrl, albumId, albumName, tabId, settings) {
       const stored = await chrome.storage.sync.get(['stats']);
       const stats = stored.stats || { imageCount: 0, totalSize: 0 };
       stats.imageCount += 1;
-      stats.totalSize += imageSize;
+      stats.totalSize += blob.size;
       await chrome.storage.sync.set({ stats });
-      
+
       notifyUser(albumId ? `Saved to ${albumName}` : "Saved to Library", "success", tabId, settings);
     } else {
       notifyUser("Already in library", "success", tabId, settings);
     }
-    
+
   } catch (error) {
     console.error("Error saving to Immich:", error);
     notifyUser(`${error.message}`, "error", tabId, settings);
   }
+}
+
+async function fetchImage(imageUrl, tabUrl) {
+  let ruleId;
+  if (tabUrl) {
+    ruleId = Math.floor(Math.random() * 100000) + 1;
+    await chrome.declarativeNetRequest.updateSessionRules({
+      addRules: [{
+        id: ruleId,
+        action: {
+          type: 'modifyHeaders',
+          requestHeaders: [
+            { header: 'Referer', operation: 'set', value: new URL(tabUrl).origin + '/' }
+          ]
+        },
+        condition: {
+          urlFilter: imageUrl,
+          resourceTypes: ['xmlhttprequest']
+        }
+      }]
+    });
+  }
+
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
+
+    return {
+      blob: await response.blob(),
+      lastModified: response.headers.get('Last-Modified'),
+      dateHeader: response.headers.get('Date')
+    };
+  } finally {
+    if (ruleId) {
+      await chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [ruleId]
+      });
+    }
+  }
+}
+
+function parseDateFromHeaders(lastModified, dateHeader) {
+  const header = lastModified || dateHeader;
+  if (header) {
+    const parsed = new Date(header);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  return new Date();
+}
+
+function extractFilename(imageUrl, mimeType) {
+  let filename = imageUrl.split('/').pop()?.split('?')[0] || `image_${Date.now()}`;
+  if (!filename.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
+    const ext = mimeType.split('/')[1] || 'jpg';
+    filename += `.${ext}`;
+  }
+  return filename;
 }
 
 async function uploadToImmich(serverUrl, apiKey, imageBlob, filename, metadata) {
@@ -295,7 +325,7 @@ function showToast(message, type) {
   }
 }
 
-async function showAlbumPicker(tabId, imageUrl, albums, settings) {
+async function showAlbumPicker(tabId, tabUrl, imageUrl, albums, settings) {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
@@ -306,7 +336,7 @@ async function showAlbumPicker(tabId, imageUrl, albums, settings) {
     chrome.runtime.onMessage.addListener(function handler(request, sender) {
       if (request.action === 'albumSelected' && sender.tab?.id === tabId) {
         chrome.runtime.onMessage.removeListener(handler);
-        saveImage(imageUrl, request.albumId, request.albumName, tabId, settings);
+        saveImage(imageUrl, request.albumId, request.albumName, tabId, tabUrl, settings);
       } else if (request.action === 'albumPickerCancelled' && sender.tab?.id === tabId) {
         chrome.runtime.onMessage.removeListener(handler);
       }
