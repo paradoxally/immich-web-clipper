@@ -46,6 +46,7 @@ async function saveImage(imageUrl, albumId, albumName, tabId, tabUrl, settings) 
 
     const metadata = {
       imageUrl: imageUrl,
+      pageUrl: tabUrl,
       fileCreatedAt: fileDate,
       fileModifiedAt: fileDate
     };
@@ -184,6 +185,7 @@ function generateXMP(metadata) {
       xmlns:exif="http://ns.adobe.com/exif/1.0/"
       xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/">
       <dc:source>${escapeXml(metadata.imageUrl)}</dc:source>
+      <dc:description>${escapeXml(metadata.pageUrl || metadata.imageUrl)}</dc:description>
       <xmp:CreateDate>${fileDate}</xmp:CreateDate>
       <xmp:ModifyDate>${fileDate}</xmp:ModifyDate>
       <photoshop:DateCreated>${fileDate}</photoshop:DateCreated>
