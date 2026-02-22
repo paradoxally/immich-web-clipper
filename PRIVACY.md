@@ -39,11 +39,12 @@ This data:
 
 The extension only makes network requests to:
 - **Your Immich server** - The URL you configure in settings
+- **Image source servers** - To download images you choose to save
 
 These requests are used to:
 - Verify your connection and API key
 - Fetch your album list
-- Upload images you choose to save
+- Download and upload images you choose to save
 
 ## Permissions
 
@@ -55,7 +56,8 @@ The extension requires these permissions:
 | `storage` | To save your settings locally |
 | `activeTab` | To show notifications on the current tab |
 | `scripting` | To inject notification UI on webpages |
-| `host_permissions` | To communicate with your Immich server |
+| `declarativeNetRequestWithHostAccess` | To set request headers when fetching images from sites with hotlink protection |
+| `host_permissions` | To communicate with your Immich server and fetch images from any website |
 
 ## Data Security
 

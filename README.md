@@ -10,6 +10,7 @@ A Chrome extension for saving images from the web directly to your self-hosted [
 - **Album organization** - Save to a default album or choose each time
 - **Statistics tracking** - Track how many images you've saved and total size
 - **Dark mode** - Automatic theme matching with manual toggle
+- **Source URL tracking** - Saves the page URL to the asset description in Immich
 - **Duplicate detection** - Skips already-saved images (based on hash)
 - **Toast notifications** - Visual feedback when saving images
 

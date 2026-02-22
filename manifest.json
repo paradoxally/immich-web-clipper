@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Immich Web Clipper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Right-click any image to save it directly to your Immich server",
   "homepage_url": "https://github.com/paradoxally/immich-web-clipper",
   "permissions": [
     "contextMenus",
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
     "<all_urls>"
