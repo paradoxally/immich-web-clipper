@@ -20,5 +20,8 @@ package-lock.json
 .env
 .env.local
 
+# Extension signing key
+*.pem
+
 # Chrome Web Store promo screenshots (local only)
 /screenshots/store/

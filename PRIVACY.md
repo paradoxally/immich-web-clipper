@@ -1,6 +1,6 @@
 # Privacy Policy for Immich Web Clipper
 
-**Last updated:** January 2026
+**Last updated:** February 2026
 
 ## Overview
 
